@@ -9,12 +9,22 @@ define('WHATSAPP_PHONE_ID',    getenv('WHATSAPP_PHONE_ID') ?: '');
 // GET: verificação da Meta — SEM BD, SEM requires
 // ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // LOG COMPLETO — remove depois
+    error_log('=== META GET ===');
+    error_log('GET params: ' . json_encode($_GET));
+    error_log('WEBHOOK_VERIFY_TOKEN: [' . getenv('WEBHOOK_VERIFY_TOKEN') . ']');
+    error_log('REQUEST_URI: ' . $_SERVER['REQUEST_URI']);
+
     $mode      = $_GET['hub_mode']         ?? '';
     $token     = $_GET['hub_verify_token'] ?? '';
     $challenge = $_GET['hub_challenge']    ?? '';
 
-    if ($mode === 'subscribe' && $token === WEBHOOK_VERIFY_TOKEN) {
+    error_log("mode=[$mode] token=[$token] challenge=[$challenge]");
+    error_log('Comparação: token===VERIFY_TOKEN ? ' . var_export($token === getenv('WEBHOOK_VERIFY_TOKEN'), true));
+
+    if ($mode === 'subscribe' && $token === getenv('WEBHOOK_VERIFY_TOKEN')) {
         http_response_code(200);
+        header('Content-Type: text/plain');
         echo $challenge;
     } else {
         http_response_code(403);
