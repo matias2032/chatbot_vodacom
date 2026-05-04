@@ -12,20 +12,10 @@ define('WEBHOOK_VERIFY_TOKEN', getenv('WEBHOOK_VERIFY_TOKEN'));
 // GET: Meta verifica se o webhook é válido
 // ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-   error_log('WEBHOOK_VERIFY_TOKEN = [' . getenv('WEBHOOK_VERIFY_TOKEN') . ']');
+    // DEBUG TEMPORÁRIO — remove depois
+    error_log('WEBHOOK_VERIFY_TOKEN = [' . getenv('WEBHOOK_VERIFY_TOKEN') . ']');
     error_log('token recebido = [' . ($_GET['hub_verify_token'] ?? '') . ']');
-    $mode      = $_GET['hub_mode']         ?? '';
-    $token     = $_GET['hub_verify_token'] ?? '';
-    $challenge = $_GET['hub_challenge']    ?? '';
-
-    if ($mode === 'subscribe' && $token === WEBHOOK_VERIFY_TOKEN) {
-        http_response_code(200);
-        echo $challenge; // Meta exige isto para confirmar
-    } else {
-        http_response_code(403);
-        echo 'Token inválido';
-    }
-    exit;
+    // ...
 }
 
 // ─────────────────────────────────────────
