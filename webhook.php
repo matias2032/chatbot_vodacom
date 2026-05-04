@@ -1,8 +1,12 @@
 <?php
-// webhook.php — Adaptado para Twilio WhatsApp Sandbox
+// ============================================================
+//  WEBHOOK.PHP — Canal WhatsApp via Twilio Sandbox
+//  Lógica RAG + Gemini delegada para funcoes_chat.php
+// ============================================================
 
 require_once 'configuracao.php';
 require_once 'conexao.php';
+require_once 'funcoes_chat.php';   // ← funções partilhadas
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -10,40 +14,35 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// ─────────────────────────────────────────
-// Twilio envia POST com campos form-encoded
-// ─────────────────────────────────────────
-$body = $_POST['Body'] ?? '';
-$de   = $_POST['From'] ?? '';
-$para = $_POST['To']   ?? '';
+// ------------------------------------------------------------
+// 1. Twilio envia POST com campos form-encoded
+// ------------------------------------------------------------
+$body = trim($_POST['Body'] ?? '');
+$de   = trim($_POST['From'] ?? '');
+$para = trim($_POST['To']   ?? '');
 
-// 🔍 DEBUG — apagar depois
 error_log("=== TWILIO WEBHOOK INICIO ===");
 error_log("From: $de | To: $para | Body: $body");
-error_log("POST completo: " . json_encode($_POST));
-// 🔍 FIM DEBUG
 
+// Responde imediatamente 200 para a Twilio não fazer retry
+// (a resposta real ao utilizador é enviada pelo REST API abaixo)
 if (empty($body) || empty($de)) {
-    // 🔍 DEBUG — apagar depois
     error_log("SAIU CEDO — Body ou From vazio");
-    // 🔍 FIM DEBUG
     http_response_code(200);
+    header('Content-Type: text/xml');
     echo '<Response></Response>';
     exit;
 }
 
 $telNormalizado = str_replace('whatsapp:', '', $de);
-
-// 🔍 DEBUG — apagar depois
 error_log("Tel normalizado: $telNormalizado");
-// 🔍 FIM DEBUG
 
 $pdo = obterConexao();
-
-// 🔍 DEBUG — apagar depois
 error_log("BD ligada com sucesso");
-// 🔍 FIM DEBUG
 
+// ------------------------------------------------------------
+// 2. Obtém ou cria conversa (janela de 24h por número)
+// ------------------------------------------------------------
 $stmt = $pdo->prepare("
     SELECT id_conversa FROM conversas
     WHERE identificador_usuario = :tel
@@ -55,71 +54,89 @@ $stmt->execute([':tel' => $telNormalizado]);
 $conversa = $stmt->fetch();
 
 if (!$conversa) {
-    // 🔍 DEBUG — apagar depois
     error_log("Sem conversa activa — a criar nova");
-    // 🔍 FIM DEBUG
-
     $stmt = $pdo->prepare("
         INSERT INTO conversas
-          (id_configuracao_bot, identificador_usuario, canal, metadados)
+            (id_configuracao_bot, identificador_usuario, canal, metadados)
         VALUES (:bot, :tel, 'whatsapp', :meta)
         RETURNING id_conversa
     ");
     $stmt->execute([
         ':bot'  => BOT_ID,
         ':tel'  => $telNormalizado,
-        ':meta' => json_encode(['plataforma' => 'twilio_whatsapp'])
+        ':meta' => json_encode(['plataforma' => 'twilio_whatsapp']),
     ]);
     $conversa = $stmt->fetch();
 } else {
-    // 🔍 DEBUG — apagar depois
     error_log("Conversa activa encontrada");
-    // 🔍 FIM DEBUG
 }
 
 $id_conversa = $conversa['id_conversa'];
-
-// 🔍 DEBUG — apagar depois
 error_log("id_conversa: $id_conversa");
-// 🔍 FIM DEBUG
 
+// ------------------------------------------------------------
+// 3. Guarda mensagem do utilizador
+// ------------------------------------------------------------
 $stmt = $pdo->prepare("
     INSERT INTO mensagens (id_conversa, papel, conteudo)
     VALUES (:id, 'utilizador', :txt)
+    RETURNING id_mensagem
 ");
 $stmt->execute([':id' => $id_conversa, ':txt' => $body]);
+$id_msg_user = $stmt->fetchColumn();
+error_log("Mensagem do utilizador guardada: $id_msg_user");
 
-// 🔍 DEBUG — apagar depois
-error_log("Mensagem do utilizador guardada");
-// 🔍 FIM DEBUG
-
+// ------------------------------------------------------------
+// 4. RAG — busca contexto
+// ------------------------------------------------------------
 $contexto = buscarContexto($pdo, $body);
+error_log("Contexto RAG: " . count($contexto['partes']) . " partes, " . count($contexto['fontes']) . " fontes");
 
-// 🔍 DEBUG — apagar depois
-error_log("Contexto RAG obtido: " . substr(json_encode($contexto), 0, 200));
-// 🔍 FIM DEBUG
+// ------------------------------------------------------------
+// 5. Chama Gemini
+// ------------------------------------------------------------
+$resultado = chamarGemini($body, $contexto, $id_conversa, $pdo);
+error_log("Gemini tempo_ms: " . $resultado['tempo_ms']);
 
-$resposta = chamarGemini($body, $contexto, $id_conversa, $pdo);
+if ($resultado['erro'] !== null) {
+    error_log("[webhook] Erro Gemini: " . $resultado['erro']);
+    // Envia mensagem de erro amigável ao utilizador
+    $resultado['texto'] = 'Desculpa, ocorreu um erro interno. Tenta novamente em instantes.';
+}
 
-// 🔍 DEBUG — apagar depois
-error_log("Resposta Gemini: " . substr($resposta, 0, 300));
-// 🔍 FIM DEBUG
+$resposta = $resultado['texto'];
+error_log("Resposta Gemini: " . substr($resposta, 0, 200));
 
+// ------------------------------------------------------------
+// 6. Guarda resposta do assistente
+// ------------------------------------------------------------
 $stmt = $pdo->prepare("
-    INSERT INTO mensagens (id_conversa, papel, conteudo)
-    VALUES (:id, 'assistente', :txt)
+    INSERT INTO mensagens
+        (id_conversa, papel, conteudo, tokens_entrada, tokens_saida, tempo_resposta_ms)
+    VALUES (:id, 'assistente', :txt, :te, :ts, :t)
+    RETURNING id_mensagem
 ");
-$stmt->execute([':id' => $id_conversa, ':txt' => $resposta]);
+$stmt->execute([
+    ':id'  => $id_conversa,
+    ':txt' => $resposta,
+    ':te'  => $resultado['t_entrada'],
+    ':ts'  => $resultado['t_saida'],
+    ':t'   => $resultado['tempo_ms'],
+]);
+$id_msg_bot = $stmt->fetchColumn();
+error_log("Resposta guardada: $id_msg_bot");
 
-// 🔍 DEBUG — apagar depois
-error_log("Resposta guardada na BD");
-// 🔍 FIM DEBUG
+// ------------------------------------------------------------
+// 7. Regista fontes RAG
+// ------------------------------------------------------------
+registarFontes($pdo, $id_msg_bot, $contexto['fontes']);
 
+// ------------------------------------------------------------
+// 8. Envia resposta ao utilizador via Twilio REST API
+// ------------------------------------------------------------
 enviarWhatsApp($de, $resposta);
 
-// 🔍 DEBUG — apagar depois
 error_log("=== TWILIO WEBHOOK FIM ===");
-// 🔍 FIM DEBUG
 
 http_response_code(200);
 header('Content-Type: text/xml');
@@ -127,13 +144,17 @@ echo '<Response></Response>';
 exit;
 
 
+// ------------------------------------------------------------
+// enviarWhatsApp()
+// Envia mensagem ao utilizador via Twilio REST API
+// Mantida aqui porque é exclusiva do canal WhatsApp
+// ------------------------------------------------------------
 function enviarWhatsApp(string $para, string $mensagem): void {
     $sid   = TWILIO_ACCOUNT_SID;
     $token = TWILIO_AUTH_TOKEN;
     $from  = TWILIO_WHATSAPP_FROM;
 
-    $url = "https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json";
-
+    $url  = "https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json";
     $data = http_build_query([
         'From' => $from,
         'To'   => $para,
@@ -147,17 +168,14 @@ function enviarWhatsApp(string $para, string $mensagem): void {
         CURLOPT_USERPWD        => "{$sid}:{$token}",
         CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
     ]);
 
     $resultado = curl_exec($ch);
     $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    // 🔍 DEBUG — apagar depois
-    error_log("Twilio API — httpCode: $httpCode");
-    error_log("Twilio API — resultado: $resultado");
-    // 🔍 FIM DEBUG
-
+    error_log("Twilio REST API — httpCode: $httpCode");
     if ($httpCode !== 201) {
         error_log("Twilio ERRO [{$httpCode}]: {$resultado}");
     }
