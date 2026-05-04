@@ -196,7 +196,9 @@ function buscarContexto(PDO $pdo, string $mensagem): array {
 // ─────────────────────────────────────────────────────────────
 // chamarGemini — perfil + prompt + histórico + API
 // ─────────────────────────────────────────────────────────────
-function chamarGemini(string $mensagem, array $contexto, string $id_conversa, PDO $pdo): string {
+function chamarGemini(string $mensagem, array $contexto, string $id_conversa, PDO $pdo): array {
+
+    $inicio = microtime(true);
 
     // Perfil do criador
     $stmt = $pdo->prepare("
@@ -282,14 +284,41 @@ function chamarGemini(string $mensagem, array $contexto, string $id_conversa, PD
     ]);
     $raw       = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $tempo_ms  = (int)((microtime(true) - $inicio) * 1000);
     curl_close($ch);
 
     if ($raw === false || $http_code !== 200) {
         error_log("[Gemini] Erro {$http_code}: " . substr($raw, 0, 300));
-        return 'Não consegui gerar uma resposta. Tenta novamente.';
+        return [
+            'texto'     => 'Não consegui gerar uma resposta. Tenta novamente.',
+            'erro'      => "Erro {$http_code}",
+            't_entrada' => null,
+            't_saida'   => null,
+            'tempo_ms'  => $tempo_ms,
+        ];
     }
 
     $dados = json_decode($raw, true);
-    return $dados['candidates'][0]['content']['parts'][0]['text']
-        ?? 'Não consegui gerar uma resposta. Tenta novamente.';
+    return [
+        'texto'     => $dados['candidates'][0]['content']['parts'][0]['text']
+                       ?? 'Não consegui gerar uma resposta. Tenta novamente.',
+        'erro'      => null,
+        't_entrada' => $dados['usageMetadata']['promptTokenCount']     ?? null,
+        't_saida'   => $dados['usageMetadata']['candidatesTokenCount'] ?? null,
+        'tempo_ms'  => $tempo_ms,
+    ];
+}
+
+function registarFontes(PDO $pdo, string $id_mensagem, array $fontes): void {
+    $stmt = $pdo->prepare("
+        INSERT INTO fontes_mensagem (id_mensagem, id_base_conhecimento, id_fragmento)
+        VALUES (:m, :k, :f)
+    ");
+    foreach ($fontes as $fonte) {
+        $stmt->execute([
+            ':m' => $id_mensagem,
+            ':k' => $fonte['tipo'] === 'conhecimento' ? $fonte['id'] : null,
+            ':f' => $fonte['tipo'] === 'fragmento'    ? $fonte['id'] : null,
+        ]);
+    }
 }
