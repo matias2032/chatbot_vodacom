@@ -12,6 +12,8 @@ define('WEBHOOK_VERIFY_TOKEN', getenv('WEBHOOK_VERIFY_TOKEN'));
 // GET: Meta verifica se o webhook é válido
 // ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+   error_log('WEBHOOK_VERIFY_TOKEN = [' . getenv('WEBHOOK_VERIFY_TOKEN') . ']');
+    error_log('token recebido = [' . ($_GET['hub_verify_token'] ?? '') . ']');
     $mode      = $_GET['hub_mode']         ?? '';
     $token     = $_GET['hub_verify_token'] ?? '';
     $challenge = $_GET['hub_challenge']    ?? '';
