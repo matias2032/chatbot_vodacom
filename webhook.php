@@ -1,16 +1,12 @@
 <?php
 
-define('WEBHOOK_VERIFY_TOKEN', 'chatbot_vodacom_xxx');
+define('WEBHOOK_VERIFY_TOKEN', getenv('WEBHOOK_VERIFY_TOKEN'));
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-    $query = $_SERVER['QUERY_STRING'] ?? '';
-
-    parse_str($query, $params);
-
-    $mode = $params['hub_mode'] ?? $params['hub.mode'] ?? '';
-    $token = $params['hub_verify_token'] ?? $params['hub.verify_token'] ?? '';
-    $challenge = $params['hub_challenge'] ?? $params['hub.challenge'] ?? '';
+    $mode = $_GET['hub_mode'] ?? '';
+    $token = $_GET['hub_verify_token'] ?? '';
+    $challenge = $_GET['hub_challenge'] ?? '';
 
     if ($mode === 'subscribe' && $token === WEBHOOK_VERIFY_TOKEN) {
 
@@ -29,4 +25,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 http_response_code(200);
+
 echo 'Webhook ativo';
