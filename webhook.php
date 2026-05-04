@@ -1,128 +1,122 @@
 <?php
-// webhook.php
+// webhook.php — Adaptado para Twilio WhatsApp Sandbox
 
-define('WEBHOOK_VERIFY_TOKEN', getenv('WEBHOOK_VERIFY_TOKEN') ?: '');
-define('WHATSAPP_TOKEN',       getenv('WHATSAPP_TOKEN') ?: '');
-define('WHATSAPP_PHONE_ID',    getenv('WHATSAPP_PHONE_ID') ?: '');
+// A Twilio NÃO faz GET de verificação como a Meta.
+// Apenas recebe POSTs com application/x-www-form-urlencoded.
 
-// ─────────────────────────────────────────
-// GET: verificação da Meta — SEM BD, SEM requires
-// ─────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-
-
-    $mode      = $_GET['hub_mode']         ?? '';
-    $token     = $_GET['hub_verify_token'] ?? '';
-    $challenge = $_GET['hub_challenge']    ?? '';
-
-    error_log("mode=[$mode] token=[$token] challenge=[$challenge]");
-    error_log('Comparação: token===VERIFY_TOKEN ? ' . var_export($token === getenv('WEBHOOK_VERIFY_TOKEN'), true));
-
-    if ($mode === 'subscribe' && $token === getenv('WEBHOOK_VERIFY_TOKEN')) {
-        http_response_code(200);
-        header('Content-Type: text/plain');
-        echo $challenge;
-    } else {
-        http_response_code(403);
-        echo 'Token inválido';
-    }
-    exit;
-}
-
-// Só carrega BD e configs para os POSTs
 require_once 'configuracao.php';
 require_once 'conexao.php';
 
-// ─────────────────────────────────────────
-// POST: mensagens do utilizador
-// ─────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
-
-    // Extrair número e texto
-    $mensagens = $input['entry'][0]['changes'][0]['value']['messages'] ?? [];
-    if (empty($mensagens)) { http_response_code(200); exit; }
-
-    $msg  = $mensagens[0];
-    $de   = $msg['from'];          // ex: 258876821594
-    $text = $msg['text']['body'];  // texto enviado
-
-    $pdo = obterConexao();
-
-    // Buscar ou criar conversa (igual ao teu chat web)
-    $stmt = $pdo->prepare("
-        SELECT id_conversa FROM conversas
-        WHERE identificador_usuario = :tel
-          AND canal = 'whatsapp'
-          AND ultima_mensagem_em > NOW() - INTERVAL '24 hours'
-        ORDER BY iniciada_em DESC LIMIT 1
-    ");
-    $stmt->execute([':tel' => $de]);
-    $conversa = $stmt->fetch();
-
-    if (!$conversa) {
-        $stmt = $pdo->prepare("
-            INSERT INTO conversas
-              (id_configuracao_bot, identificador_usuario, canal, metadados)
-            VALUES (:bot, :tel, 'whatsapp', :meta)
-            RETURNING id_conversa
-        ");
-        $stmt->execute([
-            ':bot' => BOT_ID,
-            ':tel' => $de,
-            ':meta' => json_encode(['plataforma' => 'whatsapp'])
-        ]);
-        $conversa = $stmt->fetch();
-    }
-
-    $id_conversa = $conversa['id_conversa'];
-
-    // Guardar mensagem do utilizador
-    $stmt = $pdo->prepare("
-        INSERT INTO mensagens (id_conversa, papel, conteudo)
-        VALUES (:id, 'utilizador', :txt)
-    ");
-    $stmt->execute([':id' => $id_conversa, ':txt' => $text]);
-
-    // Buscar contexto (o teu RAG já existente)
-    $contexto = buscarContexto($pdo, $text);
-
-    // Chamar Gemini (igual ao teu chat web)
-    $resposta = chamarGemini($text, $contexto, $id_conversa, $pdo);
-
-    // Guardar resposta
-    $stmt = $pdo->prepare("
-        INSERT INTO mensagens (id_conversa, papel, conteudo)
-        VALUES (:id, 'assistente', :txt)
-    ");
-    $stmt->execute([':id' => $id_conversa, ':txt' => $resposta]);
-
-    // Enviar resposta ao utilizador via Meta API
-    enviarWhatsApp($de, $resposta);
-
-    http_response_code(200);
-    echo 'OK';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo 'Método não permitido';
     exit;
 }
 
+// ─────────────────────────────────────────
+// Twilio envia POST com campos form-encoded
+// ─────────────────────────────────────────
+$body = $_POST['Body']    ?? '';   // texto da mensagem
+$de   = $_POST['From']    ?? '';   // ex: whatsapp:+258876821594
+$para = $_POST['To']      ?? '';   // ex: whatsapp:+14155238886
+
+// Ignorar se não vier texto ou número
+if (empty($body) || empty($de)) {
+    http_response_code(200);
+    echo '<Response></Response>';
+    exit;
+}
+
+// Normalizar o número (remover prefixo "whatsapp:")
+$telNormalizado = str_replace('whatsapp:', '', $de); // +258876821594
+
+$pdo = obterConexao();
+
+// Buscar ou criar conversa activa (últimas 24h)
+$stmt = $pdo->prepare("
+    SELECT id_conversa FROM conversas
+    WHERE identificador_usuario = :tel
+      AND canal = 'whatsapp'
+      AND ultima_mensagem_em > NOW() - INTERVAL '24 hours'
+    ORDER BY iniciada_em DESC LIMIT 1
+");
+$stmt->execute([':tel' => $telNormalizado]);
+$conversa = $stmt->fetch();
+
+if (!$conversa) {
+    $stmt = $pdo->prepare("
+        INSERT INTO conversas
+          (id_configuracao_bot, identificador_usuario, canal, metadados)
+        VALUES (:bot, :tel, 'whatsapp', :meta)
+        RETURNING id_conversa
+    ");
+    $stmt->execute([
+        ':bot'  => BOT_ID,
+        ':tel'  => $telNormalizado,
+        ':meta' => json_encode(['plataforma' => 'twilio_whatsapp'])
+    ]);
+    $conversa = $stmt->fetch();
+}
+
+$id_conversa = $conversa['id_conversa'];
+
+// Guardar mensagem do utilizador
+$stmt = $pdo->prepare("
+    INSERT INTO mensagens (id_conversa, papel, conteudo)
+    VALUES (:id, 'utilizador', :txt)
+");
+$stmt->execute([':id' => $id_conversa, ':txt' => $body]);
+
+// RAG + Gemini (inalterados)
+$contexto = buscarContexto($pdo, $body);
+$resposta  = chamarGemini($body, $contexto, $id_conversa, $pdo);
+
+// Guardar resposta do bot
+$stmt = $pdo->prepare("
+    INSERT INTO mensagens (id_conversa, papel, conteudo)
+    VALUES (:id, 'assistente', :txt)
+");
+$stmt->execute([':id' => $id_conversa, ':txt' => $resposta]);
+
+// Enviar resposta via Twilio
+enviarWhatsApp($de, $resposta);  // passa o "whatsapp:+258..." original
+
+http_response_code(200);
+header('Content-Type: text/xml');
+echo '<Response></Response>';  // Twilio espera TwiML vazio ou com conteúdo
+exit;
+
+
+// ─────────────────────────────────────────
+// Envio via Twilio REST API
+// ─────────────────────────────────────────
 function enviarWhatsApp(string $para, string $mensagem): void {
-    $url  = 'https://graph.facebook.com/v19.0/' . WHATSAPP_PHONE_ID . '/messages';
-    $data = [
-        'messaging_product' => 'whatsapp',
-        'to'   => $para,
-        'type' => 'text',
-        'text' => ['body' => $mensagem]
-    ];
+    $sid   = TWILIO_ACCOUNT_SID;
+    $token = TWILIO_AUTH_TOKEN;
+    $from  = TWILIO_WHATSAPP_FROM; // whatsapp:+14155238886
+
+    $url = "https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json";
+
+    $data = http_build_query([
+        'From' => $from,
+        'To'   => $para,
+        'Body' => $mensagem,
+    ]);
+
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode($data),
-        CURLOPT_HTTPHEADER     => [
-            'Authorization: Bearer ' . WHATSAPP_TOKEN,
-            'Content-Type: application/json'
-        ],
+        CURLOPT_POSTFIELDS     => $data,
+        CURLOPT_USERPWD        => "{$sid}:{$token}",  // Basic Auth
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
         CURLOPT_RETURNTRANSFER => true,
     ]);
-    curl_exec($ch);
+
+    $resultado = curl_exec($ch);
+    $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+
+    if ($httpCode !== 201) {
+        error_log("Twilio erro [{$httpCode}]: {$resultado}");
+    }
 }
