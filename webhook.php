@@ -16,10 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $token     = $_GET['hub_verify_token'] ?? '';
     $challenge = $_GET['hub_challenge']    ?? '';
 
-    // DEBUG TEMPORÁRIO
-    error_log('WEBHOOK_VERIFY_TOKEN = [' . WEBHOOK_VERIFY_TOKEN . ']');
-    error_log('token recebido       = [' . $token . ']');
-    error_log('mode recebido        = [' . $mode . ']');
+
 
     if ($mode === 'subscribe' && $token === WEBHOOK_VERIFY_TOKEN) {
         http_response_code(200);
