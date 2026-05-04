@@ -1,22 +1,17 @@
 <?php
 // webhook.php
-require_once 'configuracao.php';  // ← reutiliza as tuas configs
-require_once 'conexao.php';       // ← reutiliza a tua BD
 
-// Token secreto que defines no painel da Meta
-define('WHATSAPP_TOKEN',      getenv('WHATSAPP_TOKEN'));
-define('WHATSAPP_PHONE_ID',   getenv('WHATSAPP_PHONE_ID'));
-define('WEBHOOK_VERIFY_TOKEN', getenv('WEBHOOK_VERIFY_TOKEN'));
+define('WEBHOOK_VERIFY_TOKEN', getenv('WEBHOOK_VERIFY_TOKEN') ?: '');
+define('WHATSAPP_TOKEN',       getenv('WHATSAPP_TOKEN') ?: '');
+define('WHATSAPP_PHONE_ID',    getenv('WHATSAPP_PHONE_ID') ?: '');
 
 // ─────────────────────────────────────────
-// GET: Meta verifica se o webhook é válido
+// GET: verificação da Meta — SEM BD, SEM requires
 // ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $mode      = $_GET['hub_mode']         ?? '';
     $token     = $_GET['hub_verify_token'] ?? '';
     $challenge = $_GET['hub_challenge']    ?? '';
-
-
 
     if ($mode === 'subscribe' && $token === WEBHOOK_VERIFY_TOKEN) {
         http_response_code(200);
@@ -28,8 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// Só carrega BD e configs para os POSTs
+require_once 'configuracao.php';
+require_once 'conexao.php';
+
 // ─────────────────────────────────────────
-// POST: Meta envia mensagem do utilizador
+// POST: mensagens do utilizador
 // ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
