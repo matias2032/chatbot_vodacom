@@ -46,6 +46,7 @@ define('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/model
 define('TWILIO_ACCOUNT_SID',    getenv('TWILIO_ACCOUNT_SID')    ?: '');
 define('TWILIO_AUTH_TOKEN',     getenv('TWILIO_AUTH_TOKEN')      ?: '');
 define('TWILIO_WHATSAPP_FROM',  getenv('TWILIO_WHATSAPP_FROM')   ?: 'whatsapp:+14155238886');
+define('TELEGRAM_BOT_TOKEN', getenv('TELEGRAM_BOT_TOKEN') ?: '');
 // ------------------------------------------------------------
 // BOT — ID fixo do teu bot na tabela configuracao_bot
 // ------------------------------------------------------------
