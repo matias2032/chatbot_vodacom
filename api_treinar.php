@@ -63,28 +63,39 @@ switch ($acao) {
     // ----------------------------------------------------------
     // ELIMINAR entrada
     // ----------------------------------------------------------
-    case 'eliminar':
-        $id = trim($corpo['id'] ?? '');
-        if ($id === '') {
-            respostaJson(false, null, 'ID inválido.');
-        }
+case 'eliminar':
+    $id = trim($corpo['id'] ?? '');
+    if ($id === '') {
+        respostaJson(false, null, 'ID inválido.');
+        exit;
+    }
 
-        try {
-            $stmt = $pdo->prepare("
-                DELETE FROM base_conhecimento
-                WHERE id_base_conhecimento = :id::uuid
-                  AND id_configuracao_bot  = :bot::uuid
-            ");
-            $stmt->execute([':id' => $id, ':bot' => BOT_ID]);
+    try {
+        // 1. Primeiro elimina as fontes_mensagem que referenciam este conhecimento
+        //    (apenas as que não têm id_fragmento, para não violar a constraint)
+        $stmt = $pdo->prepare("
+            DELETE FROM fontes_mensagem
+            WHERE id_base_conhecimento = :id::uuid
+        ");
+        $stmt->execute([':id' => $id]);
 
-            if ($stmt->rowCount() === 0) {
-                respostaJson(false, null, 'Entrada não encontrada ou sem permissão.');
-            }
-            respostaJson(true, null, '');
-        } catch (\PDOException $e) {
-            respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
+        // 2. Agora elimina o conhecimento
+        $stmt = $pdo->prepare("
+            DELETE FROM base_conhecimento
+            WHERE id_base_conhecimento = :id::uuid
+              AND id_configuracao_bot  = :bot::uuid
+        ");
+        $stmt->execute([':id' => $id, ':bot' => BOT_ID]);
+
+        if ($stmt->rowCount() === 0) {
+            respostaJson(false, null, 'Entrada não encontrada ou sem permissão.');
+            exit;
         }
-        break;
+        respostaJson(true, null, '');
+    } catch (\PDOException $e) {
+        respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
+    }
+    break;
 
     // ----------------------------------------------------------
     // ALTERNAR activo/inactivo
