@@ -75,46 +75,68 @@ switch ($acao) {
         $id = $stmt->fetchColumn();
         respostaJson(true, ['id' => $id], '');
 
-    // ----------------------------------------------------------
-    // ELIMINAR entrada
-    // ----------------------------------------------------------
-    case 'eliminar':
-        $id = trim($corpo['id'] ?? '');
-        if ($id === '') respostaJson(false, null, 'ID inválido.');
+// ----------------------------------------------------------
+// ELIMINAR entrada
+// ----------------------------------------------------------
+case 'eliminar':
+    $id = trim($corpo['id'] ?? '');
+    if ($id === '') {
+        respostaJson(false, null, 'ID inválido.');
+        exit;
+    }
 
+    try {
         $stmt = $pdo->prepare("
             DELETE FROM base_conhecimento
-            WHERE id_base_conhecimento = :id
-              AND id_configuracao_bot  = :bot
+            WHERE id_base_conhecimento = :id::uuid
+              AND id_configuracao_bot  = :bot::uuid
         ");
         $stmt->execute([':id' => $id, ':bot' => BOT_ID]);
 
         if ($stmt->rowCount() === 0) {
             respostaJson(false, null, 'Entrada não encontrada ou sem permissão.');
+            exit;
         }
         respostaJson(true, null, '');
+    } catch (\PDOException $e) {
+        respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
+    }
+    break;
 
-    // ----------------------------------------------------------
-    // ALTERNAR activo/inactivo
-    // ----------------------------------------------------------
-    case 'alternar_ativo':
-        $id    = trim($corpo['id']    ?? '');
-        $ativo = (bool)($corpo['ativo'] ?? false);
+// ----------------------------------------------------------
+// ALTERNAR activo/inactivo
+// ----------------------------------------------------------
+case 'alternar_ativo':
+    $id    = trim($corpo['id']    ?? '');
+    $ativo = (bool)($corpo['ativo'] ?? false);
 
-        if ($id === '') respostaJson(false, null, 'ID inválido.');
+    if ($id === '') {
+        respostaJson(false, null, 'ID inválido.');
+        exit;
+    }
 
+    try {
         $stmt = $pdo->prepare("
             UPDATE base_conhecimento
                SET ativo = :ativo
-             WHERE id_base_conhecimento = :id
-               AND id_configuracao_bot  = :bot
+             WHERE id_base_conhecimento = :id::uuid
+               AND id_configuracao_bot  = :bot::uuid
         ");
-        $stmt->execute([':ativo' => $ativo ? 'true' : 'false', ':id' => $id, ':bot' => BOT_ID]);
+        $stmt->execute([
+            ':ativo' => $ativo ? 'true' : 'false',
+            ':id'    => $id,
+            ':bot'   => BOT_ID,
+        ]);
 
         if ($stmt->rowCount() === 0) {
             respostaJson(false, null, 'Entrada não encontrada.');
+            exit;
         }
         respostaJson(true, ['ativo' => $ativo], '');
+    } catch (\PDOException $e) {
+        respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
+    }
+    break;
 
     // ----------------------------------------------------------
     // LISTAR (para uso futuro / AJAX)
