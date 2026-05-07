@@ -7,16 +7,6 @@ require_once 'auth.php';
 require_once 'configuracao.php';
 require_once 'conexao.php';
 
-function respostaJson(bool $sucesso, mixed $dados = null, string $erro = ''): void {
-    header('Content-Type: application/json; charset=utf-8');
-    if (ob_get_level()) ob_end_clean();
-    echo json_encode([
-        'sucesso' => $sucesso,
-        'dados'   => $dados,
-        'erro'    => $erro,
-    ]);
-    exit;
-}
 
 if (!eAdmin()) {
     respostaJson(false, null, 'Não autorizado.');
