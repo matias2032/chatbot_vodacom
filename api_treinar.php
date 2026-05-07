@@ -3,13 +3,12 @@
 //  API_TREINAR.PHP — Gere entradas na base_conhecimento
 // ============================================================
 
-require_once 'auth.php';        // ← inclui auth.php (faz session_start seguro)
+require_once 'auth.php';
 require_once 'configuracao.php';
 require_once 'conexao.php';
 
 function respostaJson(bool $sucesso, mixed $dados = null, string $erro = ''): void {
     header('Content-Type: application/json; charset=utf-8');
-    // Limpa qualquer output anterior que possa corromper o JSON
     if (ob_get_level()) ob_end_clean();
     echo json_encode([
         'sucesso' => $sucesso,
@@ -19,16 +18,12 @@ function respostaJson(bool $sucesso, mixed $dados = null, string $erro = ''): vo
     exit;
 }
 
-
-// Protecção — usa a função correcta do auth.php
 if (!eAdmin()) {
     respostaJson(false, null, 'Não autorizado.');
-    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respostaJson(false, null, 'Método não permitido.');
-    exit;
 }
 
 $corpo = json_decode(file_get_contents('php://input'), true);
@@ -51,7 +46,6 @@ switch ($acao) {
             respostaJson(false, null, 'Título e conteúdo são obrigatórios.');
         }
 
-        // Converte array de etiquetas para formato PostgreSQL
         $etiquetas_pg = empty($etiquetas)
             ? null
             : '{' . implode(',', array_map(fn($e) => '"' . str_replace('"', '', $e) . '"', $etiquetas)) . '}';
@@ -74,72 +68,69 @@ switch ($acao) {
 
         $id = $stmt->fetchColumn();
         respostaJson(true, ['id' => $id], '');
-
-// ----------------------------------------------------------
-// ELIMINAR entrada
-// ----------------------------------------------------------
-case 'eliminar':
-    $id = trim($corpo['id'] ?? '');
-    if ($id === '') {
-        respostaJson(false, null, 'ID inválido.');
-        exit;
-    }
-
-    try {
-        $stmt = $pdo->prepare("
-            DELETE FROM base_conhecimento
-            WHERE id_base_conhecimento = :id::uuid
-              AND id_configuracao_bot  = :bot::uuid
-        ");
-        $stmt->execute([':id' => $id, ':bot' => BOT_ID]);
-
-        if ($stmt->rowCount() === 0) {
-            respostaJson(false, null, 'Entrada não encontrada ou sem permissão.');
-            exit;
-        }
-        respostaJson(true, null, '');
-    } catch (\PDOException $e) {
-        respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
-    }
-    break;
-
-// ----------------------------------------------------------
-// ALTERNAR activo/inactivo
-// ----------------------------------------------------------
-case 'alternar_ativo':
-    $id    = trim($corpo['id']    ?? '');
-    $ativo = (bool)($corpo['ativo'] ?? false);
-
-    if ($id === '') {
-        respostaJson(false, null, 'ID inválido.');
-        exit;
-    }
-
-    try {
-        $stmt = $pdo->prepare("
-            UPDATE base_conhecimento
-               SET ativo = :ativo
-             WHERE id_base_conhecimento = :id::uuid
-               AND id_configuracao_bot  = :bot::uuid
-        ");
-        $stmt->execute([
-            ':ativo' => $ativo ? 'true' : 'false',
-            ':id'    => $id,
-            ':bot'   => BOT_ID,
-        ]);
-
-        if ($stmt->rowCount() === 0) {
-            respostaJson(false, null, 'Entrada não encontrada.');
-            exit;
-        }
-        respostaJson(true, ['ativo' => $ativo], '');
-    } catch (\PDOException $e) {
-        respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
-    }
-    break;
+        break; // ← ESTAVA EM FALTA
 
     // ----------------------------------------------------------
-    // LISTAR (para uso futuro / AJAX)
+    // ELIMINAR entrada
+    // ----------------------------------------------------------
+    case 'eliminar':
+        $id = trim($corpo['id'] ?? '');
+        if ($id === '') {
+            respostaJson(false, null, 'ID inválido.');
+        }
+
+        try {
+            $stmt = $pdo->prepare("
+                DELETE FROM base_conhecimento
+                WHERE id_base_conhecimento = :id::uuid
+                  AND id_configuracao_bot  = :bot::uuid
+            ");
+            $stmt->execute([':id' => $id, ':bot' => BOT_ID]);
+
+            if ($stmt->rowCount() === 0) {
+                respostaJson(false, null, 'Entrada não encontrada ou sem permissão.');
+            }
+            respostaJson(true, null, '');
+        } catch (\PDOException $e) {
+            respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
+        }
+        break;
+
+    // ----------------------------------------------------------
+    // ALTERNAR activo/inactivo
+    // ----------------------------------------------------------
+    case 'alternar_ativo':
+        $id    = trim($corpo['id']    ?? '');
+        $ativo = (bool)($corpo['ativo'] ?? false);
+
+        if ($id === '') {
+            respostaJson(false, null, 'ID inválido.');
+        }
+
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE base_conhecimento
+                   SET ativo = :ativo
+                 WHERE id_base_conhecimento = :id::uuid
+                   AND id_configuracao_bot  = :bot::uuid
+            ");
+            $stmt->execute([
+                ':ativo' => $ativo ? 'true' : 'false',
+                ':id'    => $id,
+                ':bot'   => BOT_ID,
+            ]);
+
+            if ($stmt->rowCount() === 0) {
+                respostaJson(false, null, 'Entrada não encontrada.');
+            }
+            respostaJson(true, ['ativo' => $ativo], '');
+        } catch (\PDOException $e) {
+            respostaJson(false, null, 'Erro SQL: ' . $e->getMessage());
+        }
+        break;
+
+    // ----------------------------------------------------------
+    // LISTAR
     // ----------------------------------------------------------
     case 'listar':
         $stmt = $pdo->prepare("
@@ -150,6 +141,7 @@ case 'alternar_ativo':
         ");
         $stmt->execute([':bot' => BOT_ID]);
         respostaJson(true, $stmt->fetchAll(), '');
+        break;
 
     default:
         respostaJson(false, null, 'Acção desconhecida: ' . htmlspecialchars($acao));
