@@ -393,7 +393,11 @@ async function eliminarEntrada(id, btn) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ acao: 'eliminar', id })
         });
-        const dados = await resp.json();
+
+        // ← ADICIONA ESTAS LINHAS TEMPORARIAMENTE
+        const texto = await resp.text();
+        console.log('Resposta bruta:', texto);
+        const dados = JSON.parse(texto); // vai dar erro se não for JSON
 
         if (dados.sucesso) {
             document.getElementById('linha-' + id).remove();
@@ -404,6 +408,7 @@ async function eliminarEntrada(id, btn) {
             btn.textContent = 'Eliminar';
         }
     } catch(e) {
+        console.error('Erro:', e); // ← e este
         mostrarNotificacao('Erro de ligação.', 'erro');
         btn.disabled = false;
         btn.textContent = 'Eliminar';

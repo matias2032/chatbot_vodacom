@@ -7,6 +7,19 @@ require_once 'auth.php';        // ← inclui auth.php (faz session_start seguro
 require_once 'configuracao.php';
 require_once 'conexao.php';
 
+function respostaJson(bool $sucesso, mixed $dados = null, string $erro = ''): void {
+    header('Content-Type: application/json; charset=utf-8');
+    // Limpa qualquer output anterior que possa corromper o JSON
+    if (ob_get_level()) ob_end_clean();
+    echo json_encode([
+        'sucesso' => $sucesso,
+        'dados'   => $dados,
+        'erro'    => $erro,
+    ]);
+    exit;
+}
+
+
 // Protecção — usa a função correcta do auth.php
 if (!eAdmin()) {
     respostaJson(false, null, 'Não autorizado.');
