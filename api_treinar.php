@@ -3,18 +3,19 @@
 //  API_TREINAR.PHP — Gere entradas na base_conhecimento
 // ============================================================
 
+require_once 'auth.php';        // ← inclui auth.php (faz session_start seguro)
 require_once 'configuracao.php';
 require_once 'conexao.php';
 
-session_start();
-
-// Protecção
-if (empty($_SESSION['admin_autenticado'])) {
+// Protecção — usa a função correcta do auth.php
+if (!eAdmin()) {
     respostaJson(false, null, 'Não autorizado.');
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respostaJson(false, null, 'Método não permitido.');
+    exit;
 }
 
 $corpo = json_decode(file_get_contents('php://input'), true);
