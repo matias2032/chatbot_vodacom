@@ -61,7 +61,95 @@ $ultimos_docs = $stmt->fetchAll();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/estilo.css">
-    
+    <style>
+        body { overflow: auto; }
+        .area-chat { overflow: auto; }
+        .conteudo-admin { padding: 32px; max-width: 960px; }
+        .titulo-pagina { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
+        .subtitulo-pagina { font-size: 13px; color: var(--cor-texto-2); margin-bottom: 32px; }
+
+        /* Cards de estatísticas */
+        .grelha-stats {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 32px;
+        }
+        .card-stat {
+            background: var(--cor-fundo-2);
+            border: 1px solid var(--cor-borda);
+            border-radius: var(--raio);
+            padding: 20px;
+        }
+        .stat-icone {
+            width: 36px; height: 36px;
+            border-radius: var(--raio-sm);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 14px;
+        }
+        .stat-valor { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--cor-texto); }
+        .stat-label { font-size: 12px; color: var(--cor-texto-3); margin-top: 2px; }
+
+        /* Grelha de tabelas */
+        .grelha-tabelas { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .card-tabela {
+            background: var(--cor-fundo-2); border: 1px solid var(--cor-borda);
+            border-radius: var(--raio); overflow: hidden;
+        }
+        .card-tabela-cabecalho {
+            padding: 16px 20px; border-bottom: 1px solid var(--cor-borda);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-tabela-titulo { font-size: 14px; font-weight: 600; }
+        .tabela-admin { width: 100%; border-collapse: collapse; }
+        .tabela-admin td { padding: 12px 20px; font-size: 13px; border-bottom: 1px solid var(--cor-borda); color: var(--cor-texto-2); }
+        .tabela-admin tr:last-child td { border-bottom: none; }
+        .tabela-admin td:first-child { color: var(--cor-texto); font-weight: 500; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Badges de estado */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+        .badge-pronto    { background: rgba(74,222,128,0.15);  color: #4ade80; }
+        .badge-pendente  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+        .badge-erro      { background: rgba(248,113,113,0.15); color: #f87171; }
+        .badge-processar { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+
+        /* Acções rápidas */
+        .acoes-rapidas { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
+        .btn-acao {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px;
+            background: var(--cor-fundo-2); border: 1px solid var(--cor-borda);
+            border-radius: var(--raio-sm); color: var(--cor-texto-2);
+            text-decoration: none; font-size: 13px; font-weight: 500;
+            transition: all var(--transicao);
+        }
+        .btn-acao:hover { border-color: var(--cor-acento); color: var(--cor-acento); background: var(--cor-acento-suave); }
+        .btn-acao-destaque { background: var(--cor-acento); border-color: var(--cor-acento); color: #fff; }
+        .btn-acao-destaque:hover { background: var(--cor-acento-hover); color: #fff; }
+
+        /* Utilizador na sidebar */
+        .utilizador-lateral {
+            background: var(--cor-fundo-3);
+            border: 1px solid var(--cor-borda);
+            border-radius: var(--raio-sm);
+            padding: 10px 12px;
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px;
+        }
+        .utilizador-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: var(--cor-acento-suave);
+            border: 1px solid var(--cor-borda-forte);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--cor-acento);
+        }
+        .utilizador-info { flex: 1; min-width: 0; }
+        .utilizador-nome  { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .utilizador-perfil { font-size: 10px; color: var(--cor-texto-3); text-transform: capitalize; }
+
+        @media (max-width: 900px) {
+            .grelha-stats    { grid-template-columns: repeat(2, 1fr); }
+            .grelha-tabelas  { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
