@@ -374,32 +374,6 @@ if ($logado) {
 <!-- REMOVER o script inline do localStorage e o <script src="js/chat.js"> onde estavam -->
 
 <script src="js/chat.js"></script>
-<script>
-(function() {
-    const params = new URLSearchParams(window.location.search);
-    const topico = params.get('topico');
-    if (!topico) return;
-
-    // Remove o parâmetro do URL sem recarregar a página
-    history.replaceState(null, '', 'menu.php');
-
-    // Aguarda a inicialização async do chat.js
-    const INTERVALO = 100;
-    const LIMITE    = 50; // 5 segundos máximo
-    let tentativas  = 0;
-
-    const aguardar = setInterval(() => {
-        tentativas++;
-        if (typeof window.enviarTopicoInicial === 'function') {
-            clearInterval(aguardar);
-            window.enviarTopicoInicial(topico);
-        } else if (tentativas >= LIMITE) {
-            clearInterval(aguardar);
-            console.warn('[FinBot] enviarTopicoInicial não ficou disponível a tempo.');
-        }
-    }, INTERVALO);
-})();
-</script>
 
 
 </body>

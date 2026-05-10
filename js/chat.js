@@ -62,8 +62,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    destacarItemActivo();
+destacarItemActivo();
     _chatPronto = true;
+
+    // ── 3. Tópico vindo do index.php via URL ─────────────────
+    const _params = new URLSearchParams(window.location.search);
+    const _topico = _params.get('topico');
+    if (_topico) {
+        history.replaceState(null, '', 'menu.php');
+        // Pequena pausa para o DOM estar totalmente pintado
+        setTimeout(async () => {
+            if (!ID_SESSAO) {
+                await novaConversa();
+                if (!ID_SESSAO) return;
+            }
+            campo.value = _topico;
+            campo.style.height = 'auto';
+            campo.dispatchEvent(new Event('input'));
+            await enviarMensagem();
+        }, 80);
+    }
 });
 
 // ============================================================
