@@ -35,6 +35,10 @@ if (isset($_GET['erro']) && array_key_exists($_GET['erro'], $erros_google)) {
 // Mensagem de sucesso vinda do registo
 if (isset($_GET['registado'])) {
     $sucesso = 'Conta criada com sucesso! Podes fazer login agora.';
+    
+    if (isset($_GET['senha_definida'])) {
+    $sucesso = 'Palavra-passe definida! Entra agora com o teu email e palavra-passe.';
+}
 }
 
 // ── Processar o formulário ───────────────────────────────────

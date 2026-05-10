@@ -37,8 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hash = password_hash($nova_senha, PASSWORD_BCRYPT, ['cost' => 12]);
         $upd  = $pdo->prepare("UPDATE utilizadores SET senha_hash = :hash WHERE id_utilizador = :id");
         $upd->execute([':hash' => $hash, ':id' => $_SESSION['id_utilizador']]);
-        $sucesso = 'Palavra-passe definida com sucesso! Podes agora usar o login tradicional.';
-        $tem_password = true; // atualizar estado local
+
+        // Termina a sessão e redireciona para login com mensagem
+        session_unset();
+        session_destroy();
+        header('Location: login.php?senha_definida=1');
+        exit;
     }
 }
 ?>
