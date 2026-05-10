@@ -69,17 +69,17 @@ function buscarContexto(PDO $pdo, string $mensagem): array {
         }
     }
 
-    // Estratégia 3: fallback por prioridade
-    if (empty($conhecimentos)) {
-        $stmt = $pdo->prepare("
-            SELECT id_base_conhecimento, titulo, conteudo, prioridade AS r
-            FROM base_conhecimento
-            WHERE id_configuracao_bot = :bot AND ativo = TRUE
-            ORDER BY prioridade ASC LIMIT 3
-        ");
-        $stmt->execute([':bot' => BOT_ID]);
-        $conhecimentos = $stmt->fetchAll();
-    }
+    // // Estratégia 3: fallback por prioridade
+    // if (empty($conhecimentos)) {
+    //     $stmt = $pdo->prepare("
+    //         SELECT id_base_conhecimento, titulo, conteudo, prioridade AS r
+    //         FROM base_conhecimento
+    //         WHERE id_configuracao_bot = :bot AND ativo = TRUE
+    //         ORDER BY prioridade DESC LIMIT 3
+    //     ");
+    //     $stmt->execute([':bot' => BOT_ID]);
+    //     $conhecimentos = $stmt->fetchAll();
+    // }
 
     foreach ($conhecimentos as $k) {
         $contexto_partes[] = "### {$k['titulo']}\n{$k['conteudo']}";
@@ -236,16 +236,18 @@ function chamarGemini(string $mensagem, array $contexto, string $id_conversa, PD
 
     $partes = $contexto['partes'] ?? [];
     if (!empty($partes)) {
-        $prompt_sistema .= "\n\n## Base de Conhecimento\n"
-            . "Usa OBRIGATORIAMENTE as informações abaixo para responder. "
-            . "Se a resposta estiver aqui, usa-a directamente. "
-            . "Se não estiver, diz honestamente que não tens essa informação.\n\n"
-            . implode("\n\n---\n\n", $partes);
-    } else {
-        $prompt_sistema .= "\n\n## Base de Conhecimento\n"
-            . "Não foi encontrado contexto relevante para esta pergunta. "
-            . "Responde de forma geral sendo honesto sobre as limitações.";
-    }
+    $prompt_sistema .= "\n\n## Base de Conhecimento\n"
+        . "As informações abaixo podem ser úteis para responder. "
+        . "Usa-as se forem relevantes para a pergunta. "
+        . "Se a pergunta for sobre outro tema, responde com base no teu conhecimento geral "
+        . "sem te limitares ao contexto abaixo.\n\n"
+        . implode("\n\n---\n\n", $partes);
+} 
+// else {
+//         $prompt_sistema .= "\n\n## Base de Conhecimento\n"
+//             . "Não foi encontrado contexto relevante para esta pergunta. "
+//             . "Responde de forma geral sendo honesto sobre as limitações.";
+//     }
 
     // Histórico recente
     $stmt = $pdo->prepare("
