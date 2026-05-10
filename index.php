@@ -725,7 +725,7 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
     <div class="nav-user">
         <div class="nav-user-avatar"><?= mb_strtoupper(mb_substr($nome, 0, 1)) ?></div>
         <span class="nav-user-nome"><?= htmlspecialchars($nome) ?></span>
-        <a href="chat.php" class="nav-cta">Abrir Chat</a>
+        <a href="menu.php" class="nav-cta">Abrir Chat</a>
     </div>
     <?php else: ?>
     <div style="display:flex;gap:8px;align-items:center;">
@@ -763,7 +763,7 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
 
     <div class="hero-acoes">
         <?php if ($logado): ?>
-            <a href="chat.php" class="btn-hero-primario">
+            <a href="menu.php" class="btn-hero-primario">
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Continuar conversa
             </a>
@@ -772,7 +772,7 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Começar agora — é grátis
             </a>
-            <a href="chat.php" class="btn-hero-secundario">
+            <a href="menu.php" class="btn-hero-secundario">
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" stroke="currentColor" stroke-width="2"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/></svg>
                 Experimentar sem conta
             </a>
@@ -1112,7 +1112,7 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
     <p class="cta-desc">Junta-te a milhares de pessoas que já usam o FinBot para tomar melhores decisões financeiras todos os dias.</p>
     <div class="cta-acoes">
         <?php if ($logado): ?>
-            <a href="chat.php" class="btn-hero-primario">
+            <a href="menu.php" class="btn-hero-primario">
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Abrir o Chat
             </a>
@@ -1121,7 +1121,7 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
                 Criar conta gratuita
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
-            <a href="chat.php" class="btn-hero-secundario">Experimentar sem conta</a>
+            <a href="menu.php" class="btn-hero-secundario">Experimentar sem conta</a>
         <?php endif; ?>
     </div>
 </section>
@@ -1144,7 +1144,7 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
     <div class="rodape-links">
         <a href="login.php" class="rodape-link">Entrar</a>
         <a href="registo.php" class="rodape-link">Registar</a>
-        <a href="chat.php" class="rodape-link">Chat</a>
+        <a href="menu.php" class="rodape-link">Chat</a>
     </div>
 </footer>
 
