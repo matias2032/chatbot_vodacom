@@ -371,6 +371,27 @@ if ($logado) {
     const MIGRAR_SESSAO = null;
     <?php endif; ?>
 </script>
+<script>
+(function() {
+    const topico = localStorage.getItem('finbot_topico_pendente');
+    if (!topico) return;
+    localStorage.removeItem('finbot_topico_pendente');
+
+    // Aguarda o chat.js estar pronto (campo e sessão inicializados)
+    const tentarEnviar = (tentativas) => {
+        const campo = document.getElementById('campo-mensagem');
+        const btn   = document.getElementById('btn-enviar');
+        if (!campo || !btn) {
+            if (tentativas > 0) setTimeout(() => tentarEnviar(tentativas - 1), 150);
+            return;
+        }
+        campo.value = topico;
+        campo.dispatchEvent(new Event('input'));   // activa o btn-enviar via chat.js
+        setTimeout(() => btn.click(), 100);        // pequena pausa para garantir sessão criada
+    };
+    tentarEnviar(20);
+})();
+</script>
 <script src="js/chat.js"></script>
 </body>
 </html>

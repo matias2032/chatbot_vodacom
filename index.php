@@ -1037,21 +1037,19 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
     </div>
 
     <div class="topicos-grid">
-        <a href="chat.php?q=O+que+s%C3%A3o+juros+compostos%3F" class="topico-chip"><span>📐</span> Juros compostos</a>
-        <a href="chat.php?q=Como+investir+em+ETFs%3F" class="topico-chip"><span>📦</span> ETFs</a>
-        <a href="chat.php?q=Como+criar+um+or%C3%A7amento+familiar%3F" class="topico-chip"><span>🏠</span> Orçamento familiar</a>
-        <a href="chat.php?q=Regra+50+30+20" class="topico-chip"><span>✂️</span> Regra 50/30/20</a>
-        <a href="chat.php?q=O+que+%C3%A9+a+infla%C3%A7%C3%A3o+e+como+me+afecta%3F" class="topico-chip"><span>📉</span> Inflação</a>
-        <a href="chat.php?q=Como+sair+das+d%C3%ADvidas%3F" class="topico-chip"><span>🔓</span> Sair das dívidas</a>
-        <a href="chat.php?q=O+que+s%C3%A3o+ac%C3%A7%C3%B5es%3F" class="topico-chip"><span>📊</span> Acções</a>
-        <a href="chat.php?q=Como+calcular+a+reforma+antecipada%3F" class="topico-chip"><span>🏖️</span> Reforma antecipada</a>
-        <a href="chat.php?q=O+que+%C3%A9+o+score+de+cr%C3%A9dito%3F" class="topico-chip"><span>⭐</span> Score de crédito</a>
-        <a href="chat.php?q=Como+investir+com+pouco+dinheiro%3F" class="topico-chip"><span>💰</span> Investir com pouco</a>
-        <a href="chat.php?q=O+que+%C3%A9+diversifica%C3%A7%C3%A3o+de+investimentos%3F" class="topico-chip"><span>🌐</span> Diversificação</a>
-        <a href="chat.php?q=O+que+%C3%A9+um+PPR%3F" class="topico-chip"><span>🛡️</span> PPR / Reforma</a>
-        <a href="chat.php?q=Como+funciona+o+mercado+imobili%C3%A1rio%3F" class="topico-chip"><span>🏢</span> Imobiliário</a>
-        <a href="chat.php?q=O+que+s%C3%A3o+criptomoedas%3F" class="topico-chip"><span>🔐</span> Criptomoedas</a>
-        <a href="chat.php?q=Como+fazer+uma+declara%C3%A7%C3%A3o+de+IRS%3F" class="topico-chip"><span>📋</span> IRS / Impostos</a>
+        <button class="topico-chip" onclick="abrirTopico('O que são juros compostos e como funcionam?')">Juros compostos</button>
+        <button class="topico-chip" onclick="abrirTopico('O que é Poupança e Xitique e como posso usá-los?')">Poupança/Xitique</button>
+        <button class="topico-chip" onclick="abrirTopico('Como criar um orçamento familiar eficiente?')">Orçamento familiar</button>
+        <button class="topico-chip" onclick="abrirTopico('Explica-me a regra 50/30/20 para gerir o meu dinheiro.')">Regra 50/30/20</button>
+        <button class="topico-chip" onclick="abrirTopico('O que é a inflação e como me afecta?')">Inflação</button>
+        <button class="topico-chip" onclick="abrirTopico('Como posso sair das dívidas de forma eficaz?')">Sair das dívidas</button>
+        <button class="topico-chip" onclick="abrirTopico('O que são acções e como investir nelas?')">Acções</button>
+        <button class="topico-chip" onclick="abrirTopico('Como calcular e planear uma reforma antecipada?')">Reforma antecipada</button>
+        <button class="topico-chip" onclick="abrirTopico('O que é o score de crédito e como melhorá-lo?')">Score de crédito</button>
+        <button class="topico-chip" onclick="abrirTopico('Como posso investir com pouco dinheiro?')"><span>💰</span> Investir com pouco</button>
+        <button class="topico-chip" onclick="abrirTopico('O que é diversificação de investimentos e por que é importante?')"><span>🌐</span> Diversificação</button>
+        <button class="topico-chip" onclick="abrirTopico('O que é um PPR e como funciona para a reforma?')"><span>🛡️</span> PPR / Reforma</button>
+        <button class="topico-chip" onclick="abrirTopico('O que são criptomoedas e como investir com segurança?')"><span>🔐</span> Criptomoedas</button>
     </div>
 </section>
 
@@ -1284,6 +1282,13 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
         el.style.transition = `opacity 0.5s ease ${i * 0.06}s, transform 0.5s ease ${i * 0.06}s`;
         fadeObserver.observe(el);
     });
+
+        /* ── Tópicos: guardar no localStorage e ir para o chat ── */
+    function abrirTopico(pergunta) {
+        localStorage.setItem('finbot_topico_pendente', pergunta);
+        window.location.href = 'menu.php';
+    }
+
 
 })();
 </script>
