@@ -22,13 +22,15 @@ $erros_google = [
     'google_perfil'    => 'Não foi possível obter o teu perfil Google.',
     'conta_inativa'    => 'A tua conta está desactivada.',
 ];
+
+// ── Inicializar mensagens ────────────────────────────────────
+$erro    = '';
+$sucesso = '';
+
+// Erro vindo do callback Google (tem de ser DEPOIS de inicializar $erro)
 if (isset($_GET['erro']) && array_key_exists($_GET['erro'], $erros_google)) {
     $erro = $erros_google[$_GET['erro']];
 }
-
-
-$erro    = '';
-$sucesso = '';
 
 // Mensagem de sucesso vinda do registo
 if (isset($_GET['registado'])) {
@@ -54,12 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([':email' => $email]);
         $utilizador = $stmt->fetch();
 
-        if (!$utilizador || !password_verify($senha, $utilizador['senha_hash'])) {
+        if (!$utilizador) {
             $erro = 'Credenciais inválidas.';
         } elseif (!$utilizador['ativo']) {
             $erro = 'Credenciais inválidas.';
+        } elseif (empty($utilizador['senha_hash'])) {
+            // Conta criada via Google — não tem palavra-passe definida
+            $erro = 'Esta conta usa o Google para entrar. Clica em "Continuar com Google" abaixo.';
+        } elseif (!password_verify($senha, $utilizador['senha_hash'])) {
+            $erro = 'Credenciais inválidas.';
         } else {
-            // Login bem-sucedido
+            // ── Login bem-sucedido ───────────────────────────
             session_regenerate_id(true);
 
             $_SESSION['id_utilizador'] = $utilizador['id_utilizador'];
@@ -67,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['email']         = $utilizador['email'];
             $_SESSION['perfil']        = $utilizador['perfil'];
 
-            // ── Guarda sessão anónima para migração ──────────
             $id_sessao_anonimo = trim($_POST['id_sessao_anonimo'] ?? '');
             if ($id_sessao_anonimo !== '') {
                 $_SESSION['migrar_sessao'] = $id_sessao_anonimo;
