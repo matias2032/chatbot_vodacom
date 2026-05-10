@@ -8,7 +8,7 @@ iniciarSessao();
 
 // Se já está logado, vai directo para index
 if (estaLogado()) {
-    header('Location: index.php');
+    header('Location: menu.php');
     exit;
 }
 
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['migrar_sessao'] = $id_sessao_anonimo;
             }
 
-            header('Location: index.php');
+            header('Location: menu.php');
             exit;
         }
     }

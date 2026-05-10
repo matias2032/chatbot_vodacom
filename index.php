@@ -1283,12 +1283,14 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
         fadeObserver.observe(el);
     });
 
+
+})();
+
         /* ── Tópicos: guardar no localStorage e ir para o chat ── */
 function abrirTopico(pergunta) {
     window.location.href = 'menu.php?topico=' + encodeURIComponent(pergunta);
 }
 
-})();
 </script>
 
 </body>
