@@ -11,10 +11,9 @@ require_once 'google_oauth.php';
 
 // ── Verificação CSRF ─────────────────────────────────────────
 $estado = $_GET['state'] ?? '';
-if (!hash_equals($_SESSION['google_oauth_estado'] ?? '', $estado)) {
+if (!googleValidarEstado($estado)) {
     die('Estado inválido. Possível ataque CSRF.');
 }
-unset($_SESSION['google_oauth_estado']);
 
 // ── Verificar erro devolvido pelo Google ─────────────────────
 if (isset($_GET['error'])) {

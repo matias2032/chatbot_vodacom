@@ -14,11 +14,13 @@ define('GOOGLE_USERINFO_URL', 'https://www.googleapis.com/oauth2/v3/userinfo');
 
 /**
  * Gera o URL de redirecionamento para o Google.
- * Inclui um estado CSRF guardado na sessão.
+ * O estado CSRF é assinado com HMAC (não depende da sessão).
  */
 function googleUrlAutorizacao(): string {
-    $estado = bin2hex(random_bytes(16));
-    $_SESSION['google_oauth_estado'] = $estado;
+    // Gerar valor aleatório e assinar com HMAC usando a chave secreta
+    $aleatorio = bin2hex(random_bytes(16));
+    $assinatura = hash_hmac('sha256', $aleatorio, GOOGLE_CLIENT_SECRET);
+    $estado = $aleatorio . '.' . $assinatura;
 
     $params = http_build_query([
         'client_id'     => GOOGLE_CLIENT_ID,
@@ -31,6 +33,20 @@ function googleUrlAutorizacao(): string {
     ]);
 
     return GOOGLE_AUTH_URL . '?' . $params;
+}
+
+/**
+ * Valida o estado CSRF por HMAC (sem precisar de sessão).
+ */
+function googleValidarEstado(string $estado): bool {
+    $partes = explode('.', $estado, 2);
+    if (count($partes) !== 2) {
+        return false;
+    }
+    [$aleatorio, $assinatura_recebida] = $partes;
+    $assinatura_esperada = hash_hmac('sha256', $aleatorio, GOOGLE_CLIENT_SECRET);
+
+    return hash_equals($assinatura_esperada, $assinatura_recebida);
 }
 
 /**
