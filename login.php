@@ -13,6 +13,19 @@ if (estaLogado()) {
 }
 
 require_once 'conexao.php';
+require_once 'google_oauth.php';
+
+// Mensagem de erro vinda do callback Google
+$erros_google = [
+    'google_cancelado' => 'Login com Google cancelado.',
+    'google_token'     => 'Erro ao obter token do Google. Tenta novamente.',
+    'google_perfil'    => 'Não foi possível obter o teu perfil Google.',
+    'conta_inativa'    => 'A tua conta está desactivada.',
+];
+if (isset($_GET['erro']) && array_key_exists($_GET['erro'], $erros_google)) {
+    $erro = $erros_google[$_GET['erro']];
+}
+
 
 $erro    = '';
 $sucesso = '';
@@ -150,6 +163,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .alerta-erro    { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--cor-erro); }
         .alerta-sucesso { background: rgba(74,222,128,0.1);  border: 1px solid rgba(74,222,128,0.3);  color: var(--cor-sucesso); }
+
+        .separador {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 1.2rem 0; color: var(--cor-texto-3); font-size: 12px;
+}
+.separador::before, .separador::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--cor-borda-forte);
+}
+
+.btn-google {
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    width: 100%; padding: 0.72rem;
+    background: var(--cor-fundo-3);
+    border: 1px solid var(--cor-borda-forte);
+    border-radius: var(--raio-sm);
+    font-family: var(--fonte-ui); font-size: 14px; font-weight: 500;
+    color: var(--cor-texto); cursor: pointer;
+    text-decoration: none;
+    transition: background var(--transicao), border-color var(--transicao);
+}
+.btn-google:hover {
+    background: var(--cor-acento-suave);
+    border-color: var(--cor-acento);
+}
     </style>
 </head>
 <body>
@@ -168,6 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <h1 class="auth-titulo">Bem-vindo de volta</h1>
     <p class="auth-subtitulo">Entra na tua conta para continuar</p>
+
 
     <?php if ($erro): ?>
         <div class="alerta alerta-erro"><?= htmlspecialchars($erro) ?></div>
@@ -207,6 +246,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <p class="auth-link">
         Ainda não tens conta? <a href="registo.php">Criar conta</a>
     </p>
+    <div class="separador">ou</div>
+
+    <a href="<?= htmlspecialchars(googleUrlAutorizacao()) ?>" class="btn-google">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continuar com Google
+    </a>
 </div>
 
 <!-- Preenche o campo oculto com o id_sessao anónimo guardado -->
