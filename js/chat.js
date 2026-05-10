@@ -4,6 +4,7 @@
 // ============================================================
 
 // ── Estado global ────────────────────────────────────────────
+let _chatPronto = false;
 let ID_SESSAO   = null;
 let ID_CONVERSA = null;
 
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     destacarItemActivo();
+    _chatPronto = true;
 });
 
 // ============================================================
@@ -461,13 +463,20 @@ async function enviarMensagem() {
 window.enviarTopicoInicial = async function(texto) {
     if (!texto) return;
 
-    // Garante que existe sessão
+    // Aguarda inicialização completa do chat se ainda não estiver pronto
+    if (!_chatPronto) {
+        await new Promise(resolve => {
+            const t = setInterval(() => {
+                if (_chatPronto) { clearInterval(t); resolve(); }
+            }, 50);
+        });
+    }
+
     if (!ID_SESSAO) {
         await novaConversa();
         if (!ID_SESSAO) return;
     }
 
-    // Preenche o campo e envia
     campo.value = texto;
     campo.style.height = 'auto';
     campo.dispatchEvent(new Event('input'));

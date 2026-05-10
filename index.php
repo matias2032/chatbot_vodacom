@@ -1284,11 +1284,9 @@ $nome   = $logado ? ($_SESSION['nome'] ?? 'Utilizador') : '';
     });
 
         /* ── Tópicos: guardar no localStorage e ir para o chat ── */
-    function abrirTopico(pergunta) {
-        localStorage.setItem('finbot_topico_pendente', pergunta);
-        window.location.href = 'menu.php';
-    }
-
+function abrirTopico(pergunta) {
+    window.location.href = 'menu.php?topico=' + encodeURIComponent(pergunta);
+}
 
 })();
 </script>
