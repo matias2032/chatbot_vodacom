@@ -10,6 +10,10 @@ $logado     = estaLogado();
 $utilizador = $logado ? utilizadorActual() : [];
 $pdo        = obterConexao();
 
+// Captura e remove a flag de conta nova Google (só aparece uma vez)
+$mostrar_banner_google = !empty($_SESSION['conta_nova_google']);
+unset($_SESSION['conta_nova_google']);
+
 // Busca dados do bot
 $stmt = $pdo->prepare("
     SELECT b.nome AS nome_bot, b.descricao,
@@ -153,6 +157,34 @@ if ($logado) {
             gap: 6px; opacity: 0.35; padding: 1rem 0;
         }
         .chats-bloqueados-texto { font-size: 0.72rem; text-align: center; line-height: 1.4; }
+
+        /* Banner conta nova Google */
+        .banner-google {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+            background: var(--cor-acento-suave);
+            border: 1px solid var(--cor-borda-forte);
+            border-radius: var(--raio-sm);
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 13px;
+            color: var(--cor-texto);
+            animation: slideDown 0.3s ease;
+        }
+        .banner-google a {
+            white-space: nowrap; font-weight: 600;
+            color: var(--cor-acento); text-decoration: none;
+        }
+        .banner-google a:hover { text-decoration: underline; }
+        .banner-google-fechar {
+            background: none; border: none;
+            color: var(--cor-texto-3); cursor: pointer;
+            font-size: 16px; padding: 0 0.2rem; line-height: 1; flex-shrink: 0;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -303,6 +335,24 @@ if ($logado) {
         <?php endif; ?>
     </header>
 
+    <!-- ── Banner conta nova Google (aparece uma única vez) ── -->
+    <?php if ($mostrar_banner_google): ?>
+    <div class="banner-google" id="banner-google">
+        <span>
+            💡 A tua conta usa o Google para entrar.
+            Queres também poder aceder com email e palavra-passe?
+        </span>
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <a href="definir_password.php">Definir agora</a>
+            <button
+                class="banner-google-fechar"
+                onclick="document.getElementById('banner-google').remove()"
+                title="Fechar"
+            >✕</button>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="janela-mensagens" id="janela-mensagens">
         <div class="mensagem mensagem-bot" id="msg-boas-vindas">
             <div class="avatar-bot">
@@ -371,10 +421,8 @@ if ($logado) {
     const MIGRAR_SESSAO = null;
     <?php endif; ?>
 </script>
-<!-- REMOVER o script inline do localStorage e o <script src="js/chat.js"> onde estavam -->
 
 <script src="js/chat.js"></script>
-
 
 </body>
 </html>
