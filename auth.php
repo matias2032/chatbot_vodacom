@@ -6,12 +6,14 @@
 // Iniciar sessão com parâmetros seguros (invocar antes de qualquer output)
 function iniciarSessao(): void {
     if (session_status() === PHP_SESSION_NONE) {
+        // No Render, o site corre sempre em HTTPS. 
+        // Mudamos 'Strict' para 'Lax' para permitir o redirecionamento do Google.
         session_set_cookie_params([
-            'lifetime' => 0,           // expira ao fechar o browser
+            'lifetime' => 0,
             'path'     => '/',
-            'secure'   => isset($_SERVER['HTTPS']), // HTTPS em produção
-            'httponly' => true,        // inacessível via JavaScript
-            'samesite' => 'Strict',
+            'secure'   => true,      // Forçamos true porque o Render usa HTTPS
+            'httponly' => true,
+            'samesite' => 'Lax',     // 'Lax' permite que o cookie seja enviado em redirecionamentos
         ]);
         session_start();
     }
