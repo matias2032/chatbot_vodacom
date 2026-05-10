@@ -9,22 +9,30 @@ iniciarSessao();
 require_once 'conexao.php';
 require_once 'google_oauth.php';
 
-// ── Verificação CSRF ─────────────────────────────────────────
-$estado = $_GET['state'] ?? '';
-if (!googleValidarEstado($estado)) {
-    die('Estado inválido. Possível ataque CSRF.');
-}
-
-// ── Verificar erro devolvido pelo Google ─────────────────────
+// ── Verificar erro devolvido pelo Google (antes do CSRF) ─────
+// O Google pode redirecionar com ?error= mesmo sem state válido
+// (ex: utilizador cancelou antes de autenticar)
 if (isset($_GET['error'])) {
     header('Location: login.php?erro=google_cancelado');
     exit;
 }
 
+// ── Verificação CSRF ─────────────────────────────────────────
+$estado = $_GET['state'] ?? '';
+if (!googleValidarEstado($estado)) {
+    // Redireciona em vez de die() — mais amigável em produção
+    header('Location: login.php?erro=google_token');
+    exit;
+}
+
 // ── Trocar código por token ──────────────────────────────────
 $codigo = $_GET['code'] ?? '';
-$token  = googleTrocarCodigo($codigo);
+if ($codigo === '') {
+    header('Location: login.php?erro=google_token');
+    exit;
+}
 
+$token = googleTrocarCodigo($codigo);
 if (!$token) {
     header('Location: login.php?erro=google_token');
     exit;
@@ -32,15 +40,20 @@ if (!$token) {
 
 // ── Obter perfil do utilizador ───────────────────────────────
 $perfil = googleObterPerfil($token['access_token']);
-
 if (!$perfil) {
     header('Location: login.php?erro=google_perfil');
     exit;
 }
 
 $google_id = $perfil['sub'];
-$email     = $perfil['email'];
-$nome      = $perfil['name'];
+$email     = $perfil['email']  ?? '';
+$nome      = $perfil['name']   ?? 'Utilizador Google';
+
+// Segurança: email é obrigatório
+if ($email === '') {
+    header('Location: login.php?erro=google_perfil');
+    exit;
+}
 
 $pdo = obterConexao();
 
@@ -64,26 +77,31 @@ if ($utilizador) {
 
     // Se conta existe pelo email mas ainda não tem google_id, liga agora
     if (empty($utilizador['google_id'])) {
-        $upd = $pdo->prepare("UPDATE utilizadores SET google_id = :gid WHERE id_utilizador = :id");
+        $upd = $pdo->prepare("
+            UPDATE utilizadores SET google_id = :gid WHERE id_utilizador = :id
+        ");
         $upd->execute([':gid' => $google_id, ':id' => $utilizador['id_utilizador']]);
     }
 
 } else {
-    // Conta nova — criar automaticamente (sem senha)
+    // ── Conta nova — criar automaticamente (sem senha) ───────
     $stmt = $pdo->prepare("
         INSERT INTO utilizadores (nome, email, senha_hash, perfil, google_id)
         VALUES (:nome, :email, NULL, 'utilizador', :gid)
     ");
     $stmt->execute([':nome' => $nome, ':email' => $email, ':gid' => $google_id]);
 
+    // Buscar o registo recém-criado para obter o id_utilizador
     $stmt = $pdo->prepare("
         SELECT id_utilizador, nome, email, perfil, ativo
-        FROM utilizadores WHERE email = :email LIMIT 1
+        FROM utilizadores
+        WHERE email = :email
+        LIMIT 1
     ");
     $stmt->execute([':email' => $email]);
     $utilizador = $stmt->fetch();
 
-    // Sinaliza que é conta nova para mostrar sugestão no menu
+    // Sinaliza que é conta nova para mostrar banner no menu
     $_SESSION['conta_nova_google'] = true;
 }
 
