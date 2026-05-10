@@ -1,117 +1,91 @@
 <?php
 // ============================================================
-//  GOOGLE_CALLBACK.PHP — Endpoint de retorno OAuth 2.0
+//  GOOGLE_OAUTH.PHP — Configuração e funções OAuth 2.0
+//  Implementado com cURL puro (sem Composer)
 // ============================================================
 
-require_once 'auth.php';
-iniciarSessao();
+define('GOOGLE_CLIENT_ID',     getenv('GOOGLE_CLIENT_ID'));
+define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET'));
+define('GOOGLE_REDIRECT_URI',  getenv('GOOGLE_REDIRECT_URI'));
 
-require_once 'conexao.php';
-require_once 'google_oauth.php';
+define('GOOGLE_AUTH_URL',     'https://accounts.google.com/o/oauth2/v2/auth');
+define('GOOGLE_TOKEN_URL',    'https://oauth2.googleapis.com/token');
+define('GOOGLE_USERINFO_URL', 'https://www.googleapis.com/oauth2/v3/userinfo');
 
-// ── Verificar erro devolvido pelo Google (antes do CSRF) ─────
-// O Google pode redirecionar com ?error= mesmo sem state válido
-// (ex: utilizador cancelou antes de autenticar)
-if (isset($_GET['error'])) {
-    header('Location: login.php?erro=google_cancelado');
-    exit;
+// ============================================================
+//  FUNÇÃO 1 — Gerar URL de autorização Google
+//  O estado CSRF é assinado com HMAC (não depende de sessão)
+// ============================================================
+function googleUrlAutorizacao(): string {
+    $aleatorio  = bin2hex(random_bytes(16));
+    $assinatura = hash_hmac('sha256', $aleatorio, GOOGLE_CLIENT_SECRET);
+    $estado     = $aleatorio . '.' . $assinatura;
+
+    $params = http_build_query([
+        'client_id'     => GOOGLE_CLIENT_ID,
+        'redirect_uri'  => GOOGLE_REDIRECT_URI,
+        'response_type' => 'code',
+        'scope'         => 'openid email profile',
+        'state'         => $estado,
+        'access_type'   => 'online',
+        'prompt'        => 'select_account',
+    ]);
+
+    return GOOGLE_AUTH_URL . '?' . $params;
 }
 
-// ── Verificação CSRF ─────────────────────────────────────────
-$estado = $_GET['state'] ?? '';
-if (!googleValidarEstado($estado)) {
-    // Redireciona em vez de die() — mais amigável em produção
-    header('Location: login.php?erro=google_token');
-    exit;
-}
-
-// ── Trocar código por token ──────────────────────────────────
-$codigo = $_GET['code'] ?? '';
-if ($codigo === '') {
-    header('Location: login.php?erro=google_token');
-    exit;
-}
-
-$token = googleTrocarCodigo($codigo);
-if (!$token) {
-    header('Location: login.php?erro=google_token');
-    exit;
-}
-
-// ── Obter perfil do utilizador ───────────────────────────────
-$perfil = googleObterPerfil($token['access_token']);
-if (!$perfil) {
-    header('Location: login.php?erro=google_perfil');
-    exit;
-}
-
-$google_id = $perfil['sub'];
-$email     = $perfil['email']  ?? '';
-$nome      = $perfil['name']   ?? 'Utilizador Google';
-
-// Segurança: email é obrigatório
-if ($email === '') {
-    header('Location: login.php?erro=google_perfil');
-    exit;
-}
-
-$pdo = obterConexao();
-
-// ── Procurar conta existente ─────────────────────────────────
-// 1.º por google_id (já ligada); 2.º por email (conta tradicional)
-$stmt = $pdo->prepare("
-    SELECT id_utilizador, nome, email, perfil, ativo, google_id
-    FROM utilizadores
-    WHERE google_id = :gid OR email = :email
-    LIMIT 1
-");
-$stmt->execute([':gid' => $google_id, ':email' => $email]);
-$utilizador = $stmt->fetch();
-
-if ($utilizador) {
-    // Conta encontrada — verificar se está ativa
-    if (!$utilizador['ativo']) {
-        header('Location: login.php?erro=conta_inativa');
-        exit;
+// ============================================================
+//  FUNÇÃO 2 — Validar estado CSRF por HMAC
+//  Formato esperado: "aleatorio.assinatura"
+// ============================================================
+function googleValidarEstado(string $estado): bool {
+    $partes = explode('.', $estado, 2);
+    if (count($partes) !== 2) {
+        return false;
     }
 
-    // Se conta existe pelo email mas ainda não tem google_id, liga agora
-    if (empty($utilizador['google_id'])) {
-        $upd = $pdo->prepare("
-            UPDATE utilizadores SET google_id = :gid WHERE id_utilizador = :id
-        ");
-        $upd->execute([':gid' => $google_id, ':id' => $utilizador['id_utilizador']]);
-    }
+    [$aleatorio, $assinatura_recebida] = $partes;
+    $assinatura_esperada = hash_hmac('sha256', $aleatorio, GOOGLE_CLIENT_SECRET);
 
-} else {
-    // ── Conta nova — criar automaticamente (sem senha) ───────
-    $stmt = $pdo->prepare("
-        INSERT INTO utilizadores (nome, email, senha_hash, perfil, google_id)
-        VALUES (:nome, :email, NULL, 'utilizador', :gid)
-    ");
-    $stmt->execute([':nome' => $nome, ':email' => $email, ':gid' => $google_id]);
-
-    // Buscar o registo recém-criado para obter o id_utilizador
-    $stmt = $pdo->prepare("
-        SELECT id_utilizador, nome, email, perfil, ativo
-        FROM utilizadores
-        WHERE email = :email
-        LIMIT 1
-    ");
-    $stmt->execute([':email' => $email]);
-    $utilizador = $stmt->fetch();
-
-    // Sinaliza que é conta nova para mostrar banner no menu
-    $_SESSION['conta_nova_google'] = true;
+    return hash_equals($assinatura_esperada, $assinatura_recebida);
 }
 
-// ── Iniciar sessão (igual ao login tradicional) ──────────────
-session_regenerate_id(true);
+// ============================================================
+//  FUNÇÃO 3 — Trocar código de autorização por token de acesso
+// ============================================================
+function googleTrocarCodigo(string $codigo): ?array {
+    $ch = curl_init(GOOGLE_TOKEN_URL);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POSTFIELDS     => http_build_query([
+            'code'          => $codigo,
+            'client_id'     => GOOGLE_CLIENT_ID,
+            'client_secret' => GOOGLE_CLIENT_SECRET,
+            'redirect_uri'  => GOOGLE_REDIRECT_URI,
+            'grant_type'    => 'authorization_code',
+        ]),
+    ]);
+    $resposta = curl_exec($ch);
+    curl_close($ch);
 
-$_SESSION['id_utilizador'] = $utilizador['id_utilizador'];
-$_SESSION['nome']          = $utilizador['nome'];
-$_SESSION['email']         = $utilizador['email'];
-$_SESSION['perfil']        = $utilizador['perfil'];
+    $dados = json_decode($resposta, true);
+    return isset($dados['access_token']) ? $dados : null;
+}
 
-header('Location: menu.php');
-exit;
+// ============================================================
+//  FUNÇÃO 4 — Obter perfil do utilizador via token de acesso
+//  Campos devolvidos: sub (google_id), email, name, picture
+// ============================================================
+function googleObterPerfil(string $accessToken): ?array {
+    $ch = curl_init(GOOGLE_USERINFO_URL);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $accessToken],
+    ]);
+    $resposta = curl_exec($ch);
+    curl_close($ch);
+
+    $dados = json_decode($resposta, true);
+    return isset($dados['sub']) ? $dados : null;
+}
