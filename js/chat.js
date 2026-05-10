@@ -454,4 +454,22 @@ async function enviarMensagem() {
         campo.disabled = false;
         campo.focus();
     }
+
+    
 }
+
+window.enviarTopicoInicial = async function(texto) {
+    if (!texto) return;
+
+    // Garante que existe sessão
+    if (!ID_SESSAO) {
+        await novaConversa();
+        if (!ID_SESSAO) return;
+    }
+
+    // Preenche o campo e envia
+    campo.value = texto;
+    campo.style.height = 'auto';
+    campo.dispatchEvent(new Event('input'));
+    await enviarMensagem();
+};
