@@ -179,7 +179,7 @@ function formatarTamanho(int $bytes): string {
         <span class="logo-nome">Admin</span>
     </div>
     <nav class="nav-lateral">
-        <a href="index.php"      class="nav-item">
+        <a href="menu.php"      class="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h8M2 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Chat público
         </a>

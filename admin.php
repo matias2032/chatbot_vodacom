@@ -167,7 +167,7 @@ $ultimos_docs = $stmt->fetchAll();
     </div>
 
     <nav class="nav-lateral">
-        <a href="index.php"      class="nav-item">
+        <a href="menu.php"      class="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h8M2 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Chat público
         </a>
@@ -258,7 +258,7 @@ $ultimos_docs = $stmt->fetchAll();
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M1 13c0-3 2.7-4 6-4s6 1 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Editar dados do criador
         </a>
-        <a href="index.php"      class="btn-acao">
+        <a href="menu.php"      class="btn-acao">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M2 7h7M2 11h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Ver chat
         </a>

@@ -8,7 +8,7 @@ iniciarSessao();
 
 // Já logado? Redireciona
 if (estaLogado()) {
-    header('Location: index.php');
+    header('Location: menu.php');
     exit;
 }
 
