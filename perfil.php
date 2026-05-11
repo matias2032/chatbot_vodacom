@@ -121,16 +121,7 @@ function val(array $arr, string $chave): string {
 <body>
 
 <aside class="barra-lateral">
-    <div class="logo-area">
-        <div class="logo-icone">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <circle cx="14" cy="14" r="13" stroke="var(--cor-acento)" stroke-width="1.5"/>
-                <path d="M8 14c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6" stroke="var(--cor-acento)" stroke-width="1.5" stroke-linecap="round"/>
-                <circle cx="14" cy="14" r="2.5" fill="var(--cor-acento)"/>
-            </svg>
-        </div>
-        <span class="logo-nome">Admin</span>
-    </div>
+  
     <nav class="nav-lateral">
         <a href="menu.php"      class="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h8M2 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
