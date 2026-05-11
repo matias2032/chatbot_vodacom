@@ -165,13 +165,7 @@ function formatarTamanho(int $bytes): string {
 
         @media (max-width: 640px) { .form-upload-campos { grid-template-columns: 1fr; } }
 
-        /* Hamburger no admin — flutua no canto superior esquerdo do main */
-#btn-hamburger {
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    z-index: 200;
-}
+
     </style>
 </head>
 <body>

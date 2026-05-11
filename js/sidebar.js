@@ -20,19 +20,10 @@
         </svg>
     `;
 
-    // ── Injectar no cabeçalho correcto ───────────────────────
-    // Tenta .cabecalho-chat (menu.php), senão usa .conteudo-admin (admin.php),
-    // senão insere no topo do <main> ou do <body> como último recurso
-    const alvos = [
-        document.querySelector('.cabecalho-chat'),
-        document.querySelector('.conteudo-admin'),
-        document.querySelector('main'),
-        document.body,
-    ];
-    const alvo = alvos.find(el => el !== null);
-    if (alvo) alvo.insertBefore(btn, alvo.firstChild);
+    // ── Injectar sempre no body — posição controlada por CSS ─
+    document.body.appendChild(btn);
 
-    // ── Overlay (só relevante no mobile) ────────────────────
+    // ── Overlay (mobile) ────────────────────────────────────
     const overlay = document.createElement('div');
     overlay.id = 'sidebar-overlay';
     document.body.appendChild(overlay);
@@ -43,11 +34,9 @@
     }
 
     function estaAberta() {
-        if (isMobile()) {
-            return sidebar.classList.contains('sidebar-aberta');
-        } else {
-            return !sidebar.classList.contains('sidebar-aberta');
-        }
+        return isMobile()
+            ? sidebar.classList.contains('sidebar-aberta')
+            : !sidebar.classList.contains('sidebar-aberta');
     }
 
     function abrirSidebar() {
@@ -82,7 +71,6 @@
         if (e.key === 'Escape') fecharSidebar();
     });
 
-    // ── Reset ao redimensionar ───────────────────────────────
     window.addEventListener('resize', function () {
         if (!isMobile()) {
             overlay.classList.remove('overlay-visivel');

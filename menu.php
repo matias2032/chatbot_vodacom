@@ -186,6 +186,16 @@ if ($logado) {
             from { opacity: 0; transform: translateY(-8px); }
             to   { opacity: 1; transform: translateY(0); }
         }
+
+        .cabecalho-chat {
+    padding-left: 64px; /* espaço para o hamburger fixo */
+}
+
+@media (max-width: 768px) {
+    .cabecalho-chat {
+        padding-left: 64px;
+    }
+}
     </style>
 </head>
 <body>
