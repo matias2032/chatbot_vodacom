@@ -1,6 +1,8 @@
 # Configurações e Segredos
 .env
 configuracao.php
+chatbot_backup.sql
+
 
 # Dependências (O Composer baixa estas pastas)
 /vendor/

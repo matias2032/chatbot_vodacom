@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/estilo.css">
-    <script src="js/sidebar.js"></script>
+   
     <style>
         body { display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: auto; }
 
@@ -265,6 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Continuar com Google
     </a>
 </div>
+    <script src="js/sidebar.js"></script>
 
 </body>
 </html>

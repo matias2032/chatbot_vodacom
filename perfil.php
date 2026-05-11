@@ -35,7 +35,7 @@ function val(array $arr, string $chave): string {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/estilo.css">
-    <script src="js/sidebar.js"></script>
+  
     <style>
         body { overflow: auto; }
         .area-chat { overflow: auto; }
@@ -323,5 +323,7 @@ function mostrarNotificacao(msg, tipo) {
     setTimeout(() => { n.style.display = 'none'; }, 3500);
 }
 </script>
+    <script src="js/sidebar.js"></script>
+
 </body>
 </html>

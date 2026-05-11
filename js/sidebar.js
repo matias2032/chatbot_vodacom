@@ -4,10 +4,9 @@
 // ============================================================
 
 (function () {
-    // Cria o botão hamburger dinamicamente
     const btn = document.createElement('button');
-    btn.id        = 'btn-hamburger';
-    btn.title     = 'Menu';
+    btn.id    = 'btn-hamburger';
+    btn.title = 'Menu';
     btn.innerHTML = `
         <svg id="ico-menu" width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -17,42 +16,70 @@
         </svg>
     `;
 
-    // Injeta o botão como primeiro filho do cabecalho
     const cabecalho = document.querySelector('.cabecalho-chat');
-    if (cabecalho) {
-        cabecalho.insertBefore(btn, cabecalho.firstChild);
-    }
+    if (cabecalho) cabecalho.insertBefore(btn, cabecalho.firstChild);
 
-    // Cria o overlay para fechar ao clicar fora (mobile)
     const overlay = document.createElement('div');
     overlay.id = 'sidebar-overlay';
     document.body.appendChild(overlay);
 
     const sidebar = document.querySelector('.barra-lateral');
 
+    // Mobile: sidebar-aberta = visível
+    // Desktop: sidebar-aberta = recolhida (lógica invertida)
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+
+    function estaAberta() {
+        if (isMobile()) {
+            // Mobile: aberta quando tem a classe
+            return sidebar.classList.contains('sidebar-aberta');
+        } else {
+            // Desktop: aberta quando NÃO tem a classe (visível por defeito)
+            return !sidebar.classList.contains('sidebar-aberta');
+        }
+    }
+
     function abrirSidebar() {
-        sidebar.classList.add('sidebar-aberta');
-        overlay.classList.add('overlay-visivel');
+        if (isMobile()) {
+            sidebar.classList.add('sidebar-aberta');
+            overlay.classList.add('overlay-visivel');
+        } else {
+            sidebar.classList.remove('sidebar-aberta');
+        }
         document.getElementById('ico-menu').style.display   = 'none';
         document.getElementById('ico-fechar').style.display = 'block';
     }
 
     function fecharSidebar() {
-        sidebar.classList.remove('sidebar-aberta');
-        overlay.classList.remove('overlay-visivel');
+        if (isMobile()) {
+            sidebar.classList.remove('sidebar-aberta');
+            overlay.classList.remove('overlay-visivel');
+        } else {
+            sidebar.classList.add('sidebar-aberta');
+        }
         document.getElementById('ico-menu').style.display   = 'block';
         document.getElementById('ico-fechar').style.display = 'none';
     }
 
     function toggleSidebar() {
-        sidebar.classList.contains('sidebar-aberta') ? fecharSidebar() : abrirSidebar();
+        estaAberta() ? fecharSidebar() : abrirSidebar();
     }
 
     btn.addEventListener('click', toggleSidebar);
     overlay.addEventListener('click', fecharSidebar);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharSidebar(); });
 
-    // Fechar com ESC
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') fecharSidebar();
+    // Ao redimensionar janela — reset para estado correcto
+    window.addEventListener('resize', function () {
+        if (!isMobile()) {
+            // Passa para desktop: remover estado mobile
+            overlay.classList.remove('overlay-visivel');
+            // Se estava aberta no mobile, manter aberta no desktop (sem classe)
+            sidebar.classList.remove('sidebar-aberta');
+            document.getElementById('ico-menu').style.display   = 'block';
+            document.getElementById('ico-fechar').style.display = 'none';
+        }
     });
 })();
