@@ -202,7 +202,7 @@ if ($logado) {
 
 <aside class="barra-lateral">
 
-
+<br><br>
     <div class="bot-info-lateral">
         <p class="bot-descricao"><?= htmlspecialchars($descricao_bot) ?></p>
     </div>

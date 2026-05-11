@@ -483,8 +483,8 @@ body {
     top: 16px;
     left: 16px;
     z-index: 200;
-    width: 36px;
-    height: 36px;
+    width: 26px;
+    height: 26px;
     border-radius: var(--raio-sm);
     border: 1px solid var(--cor-borda);
     background: var(--cor-fundo-2);
