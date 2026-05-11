@@ -219,19 +219,28 @@ if ($logado) {
     <!-- ── Utilizador logado OU CTA de login ── -->
     <?php if ($logado): ?>
     <div class="utilizador-lateral">
-        <div class="utilizador-avatar">
-            <?= htmlspecialchars(mb_strtoupper(mb_substr($utilizador['nome'], 0, 1))) ?>
-        </div>
-        <div class="utilizador-info">
-            <div class="utilizador-nome"><?= htmlspecialchars($utilizador['nome']) ?></div>
-            <div class="utilizador-perfil"><?= htmlspecialchars($utilizador['perfil']) ?></div>
-        </div>
-        <a href="logout.php" class="btn-logout" title="Terminar sessão">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M5 2H2.5A1.5 1.5 0 001 3.5v7A1.5 1.5 0 002.5 12H5M9 10l3-3-3-3M13 7H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </a>
+    <div class="utilizador-avatar">
+        <?= htmlspecialchars(mb_strtoupper(mb_substr($utilizador['nome'], 0, 1))) ?>
     </div>
+    <div class="utilizador-info">
+        <div class="utilizador-nome"><?= htmlspecialchars($utilizador['nome']) ?></div>
+        <div class="utilizador-perfil"><?= htmlspecialchars($utilizador['perfil']) ?></div>
+    </div>
+
+    <!-- Definições da conta -->
+    <a href="definir_password.php" class="btn-logout" title="Alterar palavra-passe">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+    </a>
+
+    <a href="logout.php" class="btn-logout" title="Terminar sessão">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 2H2.5A1.5 1.5 0 001 3.5v7A1.5 1.5 0 002.5 12H5M9 10l3-3-3-3M13 7H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
     <?php else: ?>
     <div class="cta-login">
         <div class="cta-login-titulo">Acede a mais recursos</div>
