@@ -10,10 +10,11 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 
 require_once 'configuracao.php';
 require_once 'conexao.php';
+require_once 'auth.php';
 
-if (session_status() === PHP_SESSION_NONE) session_start();
+iniciarSessao();
 
-if (empty($_SESSION['admin_autenticado'])) {
+if (!eAdmin()) {
     definirCabecalhosJson();
     echo json_encode(['sucesso' => false, 'dados' => null, 'erro' => 'Não autorizado.'], JSON_UNESCAPED_UNICODE);
     exit;
