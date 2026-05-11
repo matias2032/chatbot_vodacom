@@ -164,6 +164,14 @@ function formatarTamanho(int $bytes): string {
         .notificacao.erro    { background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.3); color: #f87171; }
 
         @media (max-width: 640px) { .form-upload-campos { grid-template-columns: 1fr; } }
+
+        /* Hamburger no admin — flutua no canto superior esquerdo do main */
+#btn-hamburger {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 200;
+}
     </style>
 </head>
 <body>

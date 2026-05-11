@@ -4,6 +4,10 @@
 // ============================================================
 
 (function () {
+    const sidebar = document.querySelector('.barra-lateral');
+    if (!sidebar) return;
+
+    // ── Criar botão hamburger ────────────────────────────────
     const btn = document.createElement('button');
     btn.id    = 'btn-hamburger';
     btn.title = 'Menu';
@@ -16,27 +20,32 @@
         </svg>
     `;
 
-    const cabecalho = document.querySelector('.cabecalho-chat');
-    if (cabecalho) cabecalho.insertBefore(btn, cabecalho.firstChild);
+    // ── Injectar no cabeçalho correcto ───────────────────────
+    // Tenta .cabecalho-chat (menu.php), senão usa .conteudo-admin (admin.php),
+    // senão insere no topo do <main> ou do <body> como último recurso
+    const alvos = [
+        document.querySelector('.cabecalho-chat'),
+        document.querySelector('.conteudo-admin'),
+        document.querySelector('main'),
+        document.body,
+    ];
+    const alvo = alvos.find(el => el !== null);
+    if (alvo) alvo.insertBefore(btn, alvo.firstChild);
 
+    // ── Overlay (só relevante no mobile) ────────────────────
     const overlay = document.createElement('div');
     overlay.id = 'sidebar-overlay';
     document.body.appendChild(overlay);
 
-    const sidebar = document.querySelector('.barra-lateral');
-
-    // Mobile: sidebar-aberta = visível
-    // Desktop: sidebar-aberta = recolhida (lógica invertida)
+    // ── Lógica de estado ─────────────────────────────────────
     function isMobile() {
         return window.innerWidth <= 768;
     }
 
     function estaAberta() {
         if (isMobile()) {
-            // Mobile: aberta quando tem a classe
             return sidebar.classList.contains('sidebar-aberta');
         } else {
-            // Desktop: aberta quando NÃO tem a classe (visível por defeito)
             return !sidebar.classList.contains('sidebar-aberta');
         }
     }
@@ -69,14 +78,14 @@
 
     btn.addEventListener('click', toggleSidebar);
     overlay.addEventListener('click', fecharSidebar);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharSidebar(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') fecharSidebar();
+    });
 
-    // Ao redimensionar janela — reset para estado correcto
+    // ── Reset ao redimensionar ───────────────────────────────
     window.addEventListener('resize', function () {
         if (!isMobile()) {
-            // Passa para desktop: remover estado mobile
             overlay.classList.remove('overlay-visivel');
-            // Se estava aberta no mobile, manter aberta no desktop (sem classe)
             sidebar.classList.remove('sidebar-aberta');
             document.getElementById('ico-menu').style.display   = 'block';
             document.getElementById('ico-fechar').style.display = 'none';

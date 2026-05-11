@@ -167,6 +167,13 @@ $categorias = $stmt->fetchAll(PDO::FETCH_COLUMN);
         .sem-dados { padding: 40px; text-align: center; color: var(--cor-texto-3); font-size: 14px; }
 
         @media (max-width: 640px) { .grelha-form { grid-template-columns: 1fr; } }
+        /* Hamburger no admin — flutua no canto superior esquerdo do main */
+#btn-hamburger {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 200;
+}
     </style>
 </head>
 <body>
