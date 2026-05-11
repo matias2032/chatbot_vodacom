@@ -479,11 +479,99 @@ body {
 }
 
 /* ------------------------------------------------------------
+   BOTÃO HAMBURGER
+------------------------------------------------------------ */
+#btn-hamburger {
+    display: none; /* escondido por defeito no desktop */
+    width: 36px;
+    height: 36px;
+    border-radius: var(--raio-sm);
+    border: 1px solid var(--cor-borda);
+    background: transparent;
+    color: var(--cor-texto-2);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transicao);
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+#btn-hamburger:hover {
+    background: var(--cor-fundo-3);
+    color: var(--cor-texto);
+    border-color: var(--cor-borda-forte);
+}
+
+/* Overlay escuro por baixo da sidebar no mobile */
+#sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    backdrop-filter: blur(2px);
+}
+
+#sidebar-overlay.overlay-visivel {
+    display: block;
+}
+
+/* ------------------------------------------------------------
    RESPONSIVO
 ------------------------------------------------------------ */
+@media (max-width: 768px) {
+
+    /* Hamburger visível em mobile */
+    #btn-hamburger {
+        display: flex;
+    }
+
+    /* Sidebar escondida por defeito no mobile */
+    .barra-lateral {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Garante que está visível quando aberta */
+        display: flex;
+    }
+
+    .barra-lateral.sidebar-aberta {
+        transform: translateX(0);
+    }
+}
+
+@media (min-width: 769px) {
+
+    /* Desktop: hamburger visível para toggle opcional */
+    #btn-hamburger {
+        display: flex;
+    }
+
+    /* Sidebar visível por defeito */
+    .barra-lateral {
+        transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                    min-width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease;
+    }
+
+    /* No desktop, sidebar-aberta = recolhida (toggle inverso) */
+    .barra-lateral.sidebar-aberta {
+        width: 0 !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+        opacity: 0;
+        border: none;
+    }
+}
+
 @media (max-width: 640px) {
-    .barra-lateral { display: none; }
     .janela-mensagens { padding: 16px; }
-    .area-entrada { padding: 12px 16px 16px; }
-    .mensagem { max-width: 92%; }
+    .area-entrada     { padding: 12px 16px 16px; }
+    .mensagem         { max-width: 92%; }
 }
