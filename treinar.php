@@ -181,6 +181,7 @@ $categorias = $stmt->fetchAll(PDO::FETCH_COLUMN);
 <aside class="barra-lateral">
 
     <nav class="nav-lateral">
+        <br><br>
         <a href="menu.php"      class="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h8M2 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Chat público
