@@ -483,10 +483,10 @@ body {
     top: 16px;
     left: 16px;
     z-index: 200;
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
     border-radius: var(--raio-sm);
-    border: 1px solid var(--cor-borda);
+    border: none;
     background: var(--cor-fundo-2);
     color: var(--cor-texto-2);
     cursor: pointer;
